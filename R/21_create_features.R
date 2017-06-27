@@ -20,7 +20,7 @@ noaa <- open_noaa_files(noaa_files)
 wnv_original <- open_latest_wnv_file()
 id_table <- readRDS("data/10_calculate_idtable.Rds")
 
-ward_map <- readRDS("data/BoundariesWards.Rds")
+ward_map <- readRDS("R/maps/BoundariesWards.Rds")
 
 ##------------------------------------------------------------------------------
 ## CALCULATE UNIQUE ID BASED ON TRAP, BLOCK, LAT/LON, AND TYPE
