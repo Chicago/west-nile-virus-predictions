@@ -9,7 +9,7 @@ sourceDir("R/functions/", trace = FALSE)
 loadinstall_libraries(c("fishmethods", "ggplot2", "labeling", "caret", "sp"))
 
 refresh_noaa()
-refresh_wnv()
+refresh_wnv_file()
 
 noaa_files <- list.files("data/", pattern="noaa_values", full.names=TRUE)
 noaa <- open_noaa_files(noaa_files)

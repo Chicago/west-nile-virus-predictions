@@ -7,7 +7,11 @@
 
 open_latest_wnv_file <- function(echo = TRUE){
     #source("R/functions/parse_dated_filename.R")
-    parsed_files <- parse_dated_filename(list.files("data/", full.names = T))
+    data_filenames <- list.files("data/", full.names = T)
+    if(length(data_filenames) == 0){
+        stop("no wnv file found")
+    }
+    parsed_files <- parse_dated_filename(data_filenames)
     parsed_files <- as.data.table(parsed_files)
     # outfile <- sprintf("data/wnv_dataportal_%s.csv", Sys.Date())
     # basefilename <- parse_dated_filename(outfile)$filename_base

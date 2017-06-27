@@ -10,8 +10,8 @@ add_buffer <- function(dates, buff){
 }
 
 calc_solar <- function(buff = c(-7, -14, -21, -28, -35)){
-    # dates <- refresh_wnv()[ , unique(date)]
-    dat <- refresh_wnv()[!is.na(longitude) , .N, list(date, latitude, longitude)]
+    # dates <- refresh_wnv_file()[ , unique(date)]
+    dat <- refresh_wnv_file()[!is.na(longitude) , .N, list(date, latitude, longitude)]
     dates <- as.IDate(dat[,sort(unique(date))])
     dates <- add_buffer(dates, buff)
 

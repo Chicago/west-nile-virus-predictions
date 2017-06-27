@@ -11,7 +11,7 @@ geneorama::loadinstall_libraries(c("sp", "rgdal"))
 ##------------------------------------------------------------------------------
 ## GET DATA
 ##------------------------------------------------------------------------------
-refresh_wnv()
+refresh_wnv_file()
 wnv <- open_latest_wnv_file()
 
 if(Sys.info()['sysname']== "Linux"){

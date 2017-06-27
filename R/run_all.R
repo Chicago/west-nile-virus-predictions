@@ -15,7 +15,7 @@ cat("************************************************\n")
 cat("** REFRESHING WNV FILE                        **\n")
 cat("************************************************\n")
 res <- try({
-    refresh_wnv()
+    refresh_wnv_file()
     wnv <- open_latest_wnv_file()
     cur_digest <- digest::digest(wnv)
     if(file.exists("data/wnv_digest.txt")){
