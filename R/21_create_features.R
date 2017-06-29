@@ -152,6 +152,18 @@ noaa[ , WT08 := NULL]
 NAsummary(noaa)
 
 ##------------------------------------------------------------------------------
+## SUPPLEMENT ANY MISSING NOAA DATA WITH HOURLY
+##------------------------------------------------------------------------------
+dat_ohare <- download_noaa_hourly(usaf="725300", wban="94846", year=year(Sys.time()))
+noaa_ohare_hourly <- noaa_convert_hourly2daily(dat_ohare)
+missing_dates <- noaa[year(date) == year(Sys.time()) & is.na(TMAX), date]
+for(i in missing_dates){
+    noaa[date==i, AWND := noaa_ohare_hourly[date == i, as.integer(wind_ave)]]
+    noaa[date==i, TMAX := noaa_ohare_hourly[date == i, max_temp]]
+    noaa[date==i, PRCP := noaa_ohare_hourly[date == i, precip]]
+}
+
+##------------------------------------------------------------------------------
 ## ADD Y VALUES
 ##------------------------------------------------------------------------------
 dat$total_true <- apply(dat[ , grep("_TRUE", colnames(dat)), with =F], 1, sum)
