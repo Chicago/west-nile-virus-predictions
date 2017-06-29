@@ -27,15 +27,15 @@ merged
 ##------------------------------------------------------------------------------
 merged[,plot(max_temp ~ date, col = "blue", type = "o")]
 merged[,points(TMAX ~ date, col="orange", type="o")]
-merged[,plot(max_temp ~ TMAX)]
+merged[,plot(max_temp ~ TMAX, xlab = "daily", ylab = "hourly aggregated")]
 abline(0,1)
 
 ##------------------------------------------------------------------------------
-##  COMPARISON
+## PRCP COMPARISON
 ##------------------------------------------------------------------------------
-merged[,plot(precip ~ date, col = "blue", type = "o")]
+merged[,plot(PRCP ~ date, col = "orange", type = "o")]
+merged[,points(precip ~ date, col = "blue", type = "o")]
 # merged[,points(precip6 ~ date, col = "red", type = "o")]
-merged[,points(PRCP ~ date, col = "orange", type = "o")]
 
 
 merged[,plot(precip ~ PRCP)]
@@ -53,5 +53,5 @@ merged[,points(cumsum(PRCP) ~ date, col = "orange", type = "o")]
 ##------------------------------------------------------------------------------
 merged[,plot(wind_ave ~ date, col = "blue", type = "o")]
 merged[,points(AWND ~ date, col = "orange", type = "o")]
-merged[,plot(wind_ave ~ AWND)]
+merged[,plot(wind_ave ~ AWND, xlab = "daily", ylab = "hourly aggregated")]
 abline(0,1)
