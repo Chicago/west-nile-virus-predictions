@@ -1,4 +1,8 @@
 
+## optional file for specifying additional library paths.
+if(file.exists("untracked/libpaths")){
+    .libPaths(readLines("untracked/libpaths"))
+}
 
 ## LOAD DATA.TABLE PACKAGE AND FUNCTIONS
 library(data.table)
