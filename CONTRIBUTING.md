@@ -17,6 +17,6 @@ Please send a [GitHub Pull Request to City of Chicago](https://github.com/chicag
 ### Ability to adopt model
 If you would like to submit an improvement, please open a pull request that notes improvements to at least one of the aforementioned benchmarks. Your code should be able to reproduce those results by the data science team.
 
-Model improvements that include new data must use data that is freely (*gratis* or *libre*) to the City of Chicago. There must not be any terms that would prohibit the City from storing data.on local servers.
+Model improvements that include new data must use data that is freely (*gratis* or *libre*) to the City of Chicago. There must not be any terms that would prohibit the City from storing data on local servers.
 
-Likewise, by submitting a pull request, you agree that the City of Chicago will be allowed to use your code for analytic purposes and that your software will be licensed under the licensing found in LICENSE.md in this repository.
+Likewise, by submitting a pull request, you agree that the City of Chicago will be allowed to use your code for analytic purposes and that your software will be licensed under the licensing found in [LICENSE.md](LICENSE.md) in this repository.
