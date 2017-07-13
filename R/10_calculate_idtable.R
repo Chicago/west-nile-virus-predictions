@@ -1,5 +1,42 @@
 
 
+## GWL 2017-07-13
+## The main purposes of this script are to
+##     1. Supplement the location data that is missing from the portal. 
+##        The location on the data portal is actually a "fuzzed" location that
+##        is only accurate to the nearest block. The source data is fuzzed
+##        before it hits the portal. However, a few traps are located outside
+##        just outside the City of Chicago's city limits and these traps
+##        are missing their location data on the portal because the fuzzing
+##        algorithm is only available for city addresses. So the precise
+##        location is added to the data portal data. 
+##     2. Uniquely identify each trap based on location. Most of the traps
+##        never move, but a few have changed locations. This script adds a new
+##        id that acts as a unique identifier for each location.  This id is 
+##        used an intecept in the model, because the placement (or other 
+##        circumstances) of the trap cause it to have a unique bias.
+##     3. Fix / Correct addresses.  A few addresses are inconsistently entered
+##        so these are corrected so that each address is unique and consistent.
+##        This relies on reading in the address correction list, which isn't 
+##        in the repository because it contains a few of the exact addresses of 
+##        the traps instead of the fuzzed locations.  The address correction 
+##        list looks like this (the 9's are fake numbers)
+##
+##             search_address,	replace_address
+##             1199 W ROOSEVELT,	1199 W ROOSEVELT RD
+##             9199 W HIGGINS,	9199 W HIGGINS RD
+##             1199 S CALIFORNIA,	1199 S CALIFORNIA AVE
+##             499 W 127TH,	499 W 127TH
+##         
+##        The left column is a search pattern, and the right is the 
+##        replacement. For example "1199 S CALIFORNIA STREET" and 
+##        "1199 S CALIFORNIA ST" would be replaced with "1199 S CALIFORNIA AVE"
+##        because a greedy search is used.
+##     4. Other small modifications.  See comments below for more details / 
+##        actions, some comments are inside functions as well.
+##        
+
+
 ##------------------------------------------------------------------------------
 ## INITIALIZE
 ##------------------------------------------------------------------------------
