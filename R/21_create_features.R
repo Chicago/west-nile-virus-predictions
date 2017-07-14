@@ -23,16 +23,23 @@ id_table <- readRDS("data/10_calculate_idtable.Rds")
 ward_map <- readRDS("R/maps/BoundariesWards.Rds")
 
 ##------------------------------------------------------------------------------
-## CALCULATE UNIQUE ID BASED ON TRAP, BLOCK, LAT/LON, AND TYPE
+## SUPPLEMENT THE LOCATION DATA WITH ORACLE TABLE
 ##------------------------------------------------------------------------------
 
 ## Merge in trap id created in previous script
 wnv <- merge(x = wnv_original[i = TRUE,
                               j = .SD, 
                               .SDcols = -c("latitude", "longitude", "trap_type")], 
-             y = id_table[,list(trap, trap_type, block, id, 
-                                latitude = OLAT, longitude = OLON, 
-                                X = OX, Y = OY, census_block)], 
+             y = id_table[i = TRUE,
+                          j = list(trap, 
+                                   trap_type, 
+                                   block, 
+                                   id, 
+                                   latitude = OLAT,  ## ORACLE LATITUDE
+                                   longitude = OLON, ## ORACLE LONGITUDE
+                                   X = OX,   ## ORACLE X (BASED ON STATE PLANE)
+                                   Y = OY,   ## ORACLE Y (BASED ON STATE PLANE)
+                                   census_block)], 
              by = c("trap", "block"), 
              sort = F)
 
@@ -41,8 +48,6 @@ wnv <- merge(x = wnv_original[i = TRUE,
 ##------------------------------------------------------------------------------
 
 dcast(wnv, species~year(date), fun.aggregate = length, value.var = "result")
-# clipper(dcast(wnv, species~year(date), fun.aggregate = length, value.var = "result"))
-
 other_species <- c("CULEX ERRATICUS", "CULEX SALINARIUS",
                    "CULEX TARSALIS", "UNSPECIFIED CULEX")
 wnv[ , spec := species]
@@ -52,22 +57,19 @@ wnv[species == "CULEX PIPIENS/RESTUANS", spec := "pipiens_restauns"]
 wnv[species == "CULEX RESTUANS", spec := "restuans"]
 wnv[species == "CULEX TERRITANS", spec := "territans"]
 
-dcast(wnv, spec~year(date), fun.aggregate = length, value.var = "result")
-# clipper(dcast(wnv, spec~year(date), fun.aggregate = length, value.var = "result"))
-
-
+# dcast(wnv, spec~year(date), fun.aggregate = length, value.var = "result")
 # dcast(wnv[result==TRUE], species~year(date), fun.aggregate = length, value.var = "result")
 # dcast(wnv[result==FALSE], species~year(date), fun.aggregate = length, value.var = "result")
 # dcast(wnv, species~year(date), fun.aggregate = length, value.var = "result")
 
 ##------------------------------------------------------------------------------
-## Fix dates 
-## "week" is a better measure of the date than the date field, because there are
-## often errors with multiple measures in a single week
+## REGULARIZE DATES IN WNV DATA 
+## "week" is a better measure of the date than the date field, because there
+## are often errors with multiple measures in a single week
 ##------------------------------------------------------------------------------
 
 ## The main collection date has shifted over time from Tuesday, to Friday, and 
-## now it's Thursday
+## by 2016 it seemed to be Thursday
 dcast(wnv[ , .N, list(season_year, wday=wday(date))], 
       season_year ~ wday, value.var = "N")
 setnames(wnv, "date", "date_orig")
@@ -79,7 +81,7 @@ setcolorder(wnv, c('season_year', 'week', 'test_id', 'block', 'trap', 'trap_type
 wnv[ , .N, keyby = list(date - date_orig)]
 
 ##------------------------------------------------------------------------------
-## CONVERT DATA TO WIDE
+## CONVERT WNV SHAPE FROM LONG TO WIDE
 ##------------------------------------------------------------------------------
 
 dat <- dcast(wnv, 
@@ -106,7 +108,7 @@ setcolorder(dat, c('season_year', 'week', 'date', 'trap', 'id', 'trap_type',
 NAsummary(dat)
 
 ##------------------------------------------------------------------------------
-## GEOCODE WARD 
+## GEOCODE WARD (ONLY NEEDED FOR MAPPING, NOT USED IN MODEL)
 ##------------------------------------------------------------------------------
 
 ## Manual process
@@ -118,7 +120,14 @@ system.time(geo <- sp::over(dat, ward_map))
 dat <- as.data.table(dat)
 dat[ , ward := as.integer(geo$ward)]
 
-## chigeocodR process
+##------------------------------------------------------------------------------
+## Geocoding process using chigeocodR
+## The chigeocodR package is an internal, private pacakge that uses the city's
+## internal geocoding service to geocode point locations to regions (such as
+## ward, census blocks, or various districts). For now chigeocodR won't work 
+## because some of the locations are just outside the city limits.  So, we 
+## didn't switch from the methodology above which uses sp::over.
+##------------------------------------------------------------------------------
 # system.time(addrs <- dat[ , chigeocodR::reverseGeocode(lat = latitude, 
 #                                                        lon = longitude)])
 # system.time(wards <- chigeocodR::forwardGeocode(streetAddresses = addrs$address, 
@@ -131,15 +140,18 @@ dat[ , ward := as.integer(geo$ward)]
 
 
 ##------------------------------------------------------------------------------
-## TRAP OBSERVATION COUNT FOR CREDIBILITY
+## ADD TRAP OBSERVATION COUNT FOR CREDIBILITY
 ## IN THE MODEL WE CAN EXCLUDE TRAPS WITH VERY LOW COUNTS
 ##------------------------------------------------------------------------------
 
 ## Calculate how many times we see a trap
+## This is no longer used, but it was an initial attempt to estimate the 
+## credibility of a trap.  Some traps only appear a handful of times, and 
+## these probably contribute more noise than information to the model. 
 dat[ , trap_obs_count := .N, id]
 
 ##------------------------------------------------------------------------------
-## REMOVE SOME VARIABLES WITH MISSING DATA FOR SIMPLICITY
+## REMOVE SOME MISSING VARIABLES FROM NOAA DATA (FOR SIMPLICITY)
 ##------------------------------------------------------------------------------
 
 # noaa[ , WDF5 := NULL]  ## Should impute later, this is wind speed
@@ -152,20 +164,35 @@ noaa[ , WT08 := NULL]
 NAsummary(noaa)
 
 ##------------------------------------------------------------------------------
-## SUPPLEMENT ANY MISSING NOAA DATA WITH HOURLY
+## SUPPLEMENT ANY MISSING NOAA DAILY RECORDS WITH HOURLY DATA
+## Often the most recent data in the weather file contains NA values, which 
+## will cause the model to fail. This part of the code downloads the hourly
+## weather data and supplements the daily values that are NA.
 ##------------------------------------------------------------------------------
-dat_ohare <- download_noaa_hourly(usaf="725300", wban="94846", year=year(Sys.time()))
-noaa_ohare_hourly <- noaa_convert_hourly2daily(dat_ohare)
+## Subset NOAA data to dates that are within the range of the wnv data
+noaa <- noaa[date <= max(wnv$date_orig)]
+## Find dates with missing values
 missing_dates <- noaa[year(date) == year(Sys.time()) & is.na(TMAX), date]
-for(i in missing_dates){
-    noaa[date==i, AWND := noaa_ohare_hourly[date == i, as.integer(wind_ave)]]
-    noaa[date==i, TMAX := noaa_ohare_hourly[date == i, max_temp]]
-    noaa[date==i, PRCP := noaa_ohare_hourly[date == i, precip]]
+## Replace missing NOAA daily data with hourly aggregates
+## Note that no regristration / token is needed to access the hourly FTP site
+if(length(missing_dates) > 0){
+    dat_ohare <- download_noaa_hourly(usaf="725300", wban="94846", year=year(Sys.time()))
+    noaa_ohare_hourly <- noaa_convert_hourly2daily(dat_ohare)
+    for(i in missing_dates){
+        noaa[date==i, AWND := noaa_ohare_hourly[date == i, as.integer(wind_ave)]]
+        noaa[date==i, TMAX := noaa_ohare_hourly[date == i, max_temp]]
+        noaa[date==i, PRCP := noaa_ohare_hourly[date == i, precip]]
+    }
 }
 
 ##------------------------------------------------------------------------------
-## ADD Y VALUES
+## ADD Y VALUES TO WNV DATA
 ##------------------------------------------------------------------------------
+
+## Early on it wasn't clear which outcome would be the "y value" that we were
+## going to predict, so several things were calculated below. These values are 
+## still useful for reports, diagnostics, plots, and map construction.
+
 dat$total_true <- apply(dat[ , grep("_TRUE", colnames(dat)), with =F], 1, sum)
 dat$total_false <- apply(dat[ , grep("_FALSE", colnames(dat)), with =F], 1, sum)
 dat$total_mosquitoes <- dat[ , total_true + total_false]
@@ -174,17 +201,22 @@ dat[ , pct_wnv := total_true / (total_true + total_false)]
 dat[ , wnv := as.integer(0!=(total_true / (total_true + total_false)))]
 
 ##------------------------------------------------------------------------------
-## CREATE VARIABLES BASED ON PREVIOUS PYTHON WORK AND BASED ON LAGGED VALUES
+## CREATE VARIABLES OF LAGGED VALUES
+## (BASED ON HECTOR'S PREVIOUS PYTHON WORK)
 ##------------------------------------------------------------------------------
 
 setkey(dat, id, date, week)
 NAsummary(dat)
 
-## Demo of the shift function
+## The shift function is essentially a lag operator.  See ?stats::lag
+## Demo of the shift function:
 # dat[ , date_prev1 := shift(as.character(date), -1), by = id]
 # dat[ , list(id, date, date_prev1)]
 # dat[ , date_prev1 := NULL, by = id]
 
+##------------------------------------------
+## CREATE LAGGED WNV TEST RESULT VALUES
+##------------------------------------------
 dat[ , wnvw1 := shift(wnv, -1), by = id]
 dat[ , wnvw2 := shift(wnv, -2), by = id]
 ## Future WNV for forecast testing
@@ -194,15 +226,13 @@ season_prev_summary <- dat[i = TRUE,
                            j = list(date,
                                     wnv_ytd = shift(cumsum(wnv), -1)),
                            keyby = list(id, year = year(date))]
-# season_prev_summary
-# season_prev_summary[id=="id169"]
-
 dat <- merge(dat,
              season_prev_summary[,.SD,.SDcols=-"year"],
              c("id", "date"))
-# split(dat, dat$id)
-# dat[id=="id169"]
 
+##------------------------------------------
+## LAGGED MOSQUITO COUNTS BY SPECIES
+##------------------------------------------
 ## First create total
 dat[ , culx := other_FALSE + other_TRUE + pipiens_FALSE + pipiens_TRUE +
          pipiens_restauns_FALSE + pipiens_restauns_TRUE + restuans_FALSE +
@@ -223,6 +253,11 @@ dat[ , pipres1 := shift(pipres, -1), by = id]
 dat[ , pipres2 := shift(pipres, -2), by = id]
 dat[ , other1 := shift(other, -1), by = id]
 dat[ , other2 := shift(other, -2), by = id]
+
+
+##------------------------------------------
+## HISTORICAL WEATHER DATA
+##------------------------------------------
 
 ## Calculate previous week values, then join them to the data
 ## Use all possible dates for flexibility
@@ -245,6 +280,14 @@ weather_summary <- jj[i = TRUE,
                       keyby = list(date)]
 weather_summary
 rm(xx,yy,jj)
+
+##------------------------------------------------------------------------------
+## CHECK FOR NEAR ZERO VARIANCE COLUMNS AND LINEAR COMBOS
+##------------------------------------------------------------------------------
+
+## Use the caret package to identify columns with near zero variance and
+## columns that are linear combinations of other columns.  These variables
+## will not contribute to the model. 
 caret::nearZeroVar(weather_summary)
 weather_summary <- weather_summary[,.SD,.SDcols=-c("snow", "snwd")]
 caret::findLinearCombos(weather_summary[ , list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
@@ -252,7 +295,9 @@ cor(weather_summary[ , list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
 dat <- merge(dat, weather_summary, "date")
 
 
+##------------------------------------------------------------------------------
 ## Diagnostics / plots
+##------------------------------------------------------------------------------
 if(FALSE){
     msum <- dat[i = T,
                 list(pos = sum(wnv), .N), 
