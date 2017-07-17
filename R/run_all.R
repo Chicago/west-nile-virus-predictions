@@ -1,4 +1,8 @@
 
+## Some sanity checks for basic system info
+print(R.version.string)
+Sys.info()
+
 ## optional file for specifying additional library paths.
 if(file.exists("untracked/libpaths")){
     .libPaths(readLines("untracked/libpaths"))
