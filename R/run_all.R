@@ -48,7 +48,6 @@ if(cur_digest == prev_digest) {
     }else {
         subj <- "'WNV PREDICTIONS - SUCCESS - NO UPDATE'"
     }
-    cmd <- paste("echo", msg, "| mail -s", subj, " %s")
 } else {
     msg <- paste0("'Email from ", thisfile, "\n",
                   "Data changed on ", url, "\n",
@@ -95,14 +94,18 @@ if(cur_digest == prev_digest) {
         msg <- paste(msg, "SUCCESS - R/40_upload_predictions_ROracle.R'", sep = "\n")
     }
     rm(res)
-    
-    # cat(msg)
-    cmd <- paste("echo", msg, "| mail -s", subj, " %s")
 }
 
-system(sprintf(cmd, "gene.leynes@cityofchicago.org"))
-system(sprintf(cmd, "tom.schenk@cityofchicago.org"))
-system(sprintf(cmd, "nicholas.lucius2@cityofchicago.org"))
+## Set the message, subject, and return address in the command.  Also add %s 
+## for the sprintf command. 
+cmd <- paste0("echo ", msg, " | mail -s ", subj, 
+              " -r data-science-bot@cityofchicago.org", " %s")
+## Execute the mail command using the call to system
+system(sprintf(cmd, "data-science@cityofchicago.org"))
+
+## For debugging I might want to mail myself. 
+# system(sprintf(cmd, "gene.leynes@cityofchicago.org"))
+
 
 cat("************************************************\n")
 cat("** FINISHED                                   **\n")
