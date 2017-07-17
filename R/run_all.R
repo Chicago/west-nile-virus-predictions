@@ -101,7 +101,7 @@ if(cur_digest == prev_digest) {
 cmd <- paste0("echo ", msg, " | mail -s ", subj, 
               " -r data-science-bot@cityofchicago.org", " %s")
 ## Execute the mail command using the call to system
-system(sprintf(cmd, "data-science@cityofchicago.org"))
+system(sprintf(cmd, "datascience@cityofchicago.org"))
 
 ## For debugging I might want to mail myself. 
 # system(sprintf(cmd, "gene.leynes@cityofchicago.org"))
