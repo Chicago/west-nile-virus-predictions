@@ -290,7 +290,8 @@ rm(xx,yy,jj)
 ## will not contribute to the model. 
 caret::nearZeroVar(weather_summary)
 weather_summary <- weather_summary[,.SD,.SDcols=-c("snow", "snwd")]
-caret::findLinearCombos(weather_summary[ , list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
+caret::findLinearCombos(weather_summary[date < missing_dates, 
+                                        list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
 cor(weather_summary[ , list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
 dat <- merge(dat, weather_summary, "date")
 
