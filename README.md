@@ -1,10 +1,12 @@
 # The West Nile Virus Prediction Model
 
-This model is used to predict the risk of West Nile Virus being present two consecutive weeks in a row. 
+This project forecasts the risk that any subsequent mosquitos will test positive for West Nile Virus (WNV) after any mosquitos have already been found to have WNV at a particular trap. The model allows the Chicago Department of Public Health to proactively react to the spread of WNV. A multilevel (hierarchical) regression to predict the likelihood that WNV will be present if it was present last week. A cross-validation study has shown that this model correctly predicts consecutive results for WNV virus about 80 percent of the time.
 
-Most of the work in this project is data wrangling to get the data into a format where each row represents the results for a week / location collection, and the interval between the dates is regular (i.e. a week apart). Once this is accomplished, a model is fit that is very similar to a generalized linear model to predict the likelihood that WNV will be present if it was present last week. This allows our teams to go out and spray for mosquitos a week earlier than they would have otherwise.
+This repository provides all of the source code used develop the model and generate predictions, however this project can not be executed in its entirety outside of the City of Chicago computer network. Though it does provide the statistical methodology to be reviewed, evaluated, and replicated elsewhere.
 
 ## Data and Model
+
+Most of the work in this project is manipulation to get the data into a format where each row represents the results for the test results of a week / trap location collection, and the interval between the dates is regular (i.e. a week apart).
 
 The model relies on the presence of past West Nile Virus, weather data, and trap locations with a Generalized Linear Mixed Model to develop predictions of whether a trap will have WNV present on during a particular collection week.  The models used rely on R’s `arm` package written by (by Yu-Sung Su, Daniel Lee, and Andrew Gelman). 
 
