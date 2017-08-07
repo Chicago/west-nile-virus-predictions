@@ -294,8 +294,11 @@ rm(xx,yy,jj)
 ## will not contribute to the model. 
 caret::nearZeroVar(weather_summary)
 weather_summary <- weather_summary[,.SD,.SDcols=-c("snow", "snwd")]
-caret::findLinearCombos(weather_summary[date < min(missing_dates), 
-                                        list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
+## findLinearCombos causes errors if dates are missing, and filtering causes
+## warnings if dates are not missing. So, run this manually, but it doesn't 
+## change unless you change data sources or add new fetaures. It's just a good 
+## diagnostic to keep in mind. 
+# caret::findLinearCombos(weather_summary[ , list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
 cor(weather_summary[ , list(tmin, tmax, awnd, prcp, wdf2, wsf2)])
 dat <- merge(dat, weather_summary, "date")
 
