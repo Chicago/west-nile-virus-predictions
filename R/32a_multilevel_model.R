@@ -237,3 +237,9 @@ rm(tmpr)
 xmat[grp == "year2016" & !is.na(wnvwnv_f1) , calculate_metrics(wnvwnv_f1, m3a_forecast)]
 xmat[grp == "year2016", calculate_metrics(wnvwnv, m3a_forecast)]
 
+## Round predictions
+for (col in colnames(xmat[ , m2:m3a_forecast])){
+    xmat[ , (col) := round(xmat[[col]], 5)][]
+}
+xmat
+
