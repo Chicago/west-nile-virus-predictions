@@ -172,7 +172,12 @@ NAsummary(noaa)
 ## Subset NOAA data to dates that are within the range of the wnv data
 noaa <- noaa[date <= max(wnv$date_orig)]
 ## Find dates with missing values
-missing_dates <- noaa[year(date) == year(Sys.time()) & is.na(TMAX), date]
+## Check all the NOAA variables used TMAX, AWND, and PRCP
+## Limit check to current year. There are some missing values around Dec 31 
+## sometimes, but these don't affect the model because there is no WNV then.
+missing_dates <- noaa[i = year(date) == year(Sys.time()) & 
+                          (is.na(TMAX) | is.na(AWND) | is.na(PRCP)),
+                      j = date]
 ## Replace missing NOAA daily data with hourly aggregates
 ## Note that no regristration / token is needed to access the hourly FTP site
 if(length(missing_dates) > 0){
@@ -268,8 +273,7 @@ yy <- noaa[ , list(AWND, PRCP, SNOW, SNWD, TMAX, TMIN, WDF2, WSF2),
             keyby = list(start = date, end = date)]
 jj <- foverlaps(xx, yy)
 weather_summary <- jj[i = TRUE,
-                      j = list(tmin = mean(TMIN),
-                               awnd = mean(AWND),
+                      j = list(awnd = mean(AWND),
                                prcp = mean(PRCP),
                                snow = mean(SNOW),
                                snwd = mean(SNWD),
