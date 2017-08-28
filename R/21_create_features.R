@@ -73,7 +73,7 @@ wnv[species == "CULEX TERRITANS", spec := "territans"]
 dcast(wnv[ , .N, list(season_year, wday=wday(date))], 
       season_year ~ wday, value.var = "N")
 setnames(wnv, "date", "date_orig")
-wnv[ , date := as.IDate(round(date_orig, "year") + (week / 52) * 365)]
+wnv[ , date := as.IDate(round(date_orig, "year") + (week / 52) * 365) - 6]
 setcolorder(wnv, c('season_year', 'week', 'test_id', 'block', 'trap', 'trap_type', 
                    'date_orig', 'number_of_mosquitoes', 'result', 'species', 
                    'id', 'date', 'latitude', 'longitude', 'X', 'Y', 
