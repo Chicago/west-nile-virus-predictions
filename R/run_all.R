@@ -1,11 +1,16 @@
 
 ## Some sanity checks for basic system info
+cat(system("which R"), "\n\n")
 print(R.version.string)
 Sys.info()
 
 ## optional file for specifying additional library paths.
 if(file.exists("untracked/libpaths")){
-    .libPaths(readLines("untracked/libpaths"))
+    cat("\n")
+    cat("LIBPATH:\n")
+    cat(.Library.site, "\n")
+    cat(.libPaths(), "\n")
+    cat(row.names(installed.packages()), "\n")
 }
 
 ## LOAD DATA.TABLE PACKAGE AND FUNCTIONS
