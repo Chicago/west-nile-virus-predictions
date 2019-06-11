@@ -5,6 +5,7 @@ download_wnv <- function(
     setnames(dat, tolower(colnames(dat)))
     setnames(dat, gsub(" ", "_", colnames(dat)))
     setnames(dat, "test_date", "date")
+    dat <- dat[order(test_id)][]
     dat <- dat[ , date := as.IDate(date, "%m/%d/%Y")][]
     dat <- dat[ , result := result == "positive"][]
     dat <- dat[ , location := NULL][]
