@@ -1,4 +1,4 @@
-#!/bin/bash
 
-Rscript --vanilla R/run_all.R
+R --vanilla < R/run_all.R
+
 
